@@ -2,3 +2,4 @@
 
 Contributors
 - Vidit Agrawal
+- Ava Pezza
