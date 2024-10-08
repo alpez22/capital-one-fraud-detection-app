@@ -3,3 +3,5 @@
 Contributors
 - Vidit Agrawal
 - Ava Pezza
+- Atharva Ketkar
+- Abhishek Das
