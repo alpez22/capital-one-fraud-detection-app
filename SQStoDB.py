@@ -2,7 +2,7 @@ import json
 import boto3
 import random
 import uuid
-from decimal import Decimal  # To handle float conversion
+from decimal import Decimal
 
 # Initialize boto3 clients for SQS and DynamoDB
 sqs = boto3.client('sqs')
@@ -18,18 +18,16 @@ def convert_floats_to_decimal(data):
         return {k: convert_floats_to_decimal(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [convert_floats_to_decimal(i) for i in data]
-    elif isinstance(data, float):  # Convert float to Decimal
-        return Decimal(str(data))  # Use str to preserve precision
+    elif isinstance(data, float):
+        return Decimal(str(data))
     return data
 
 def lambda_handler(event, context):
-    # Get the DynamoDB Table
     table = dynamodb.Table(DYNAMODB_TABLE_NAME)
     
-    # Poll the message from SQS
     response = sqs.receive_message(
         QueueUrl=SQS_QUEUE_URL,
-        MaxNumberOfMessages=1,  # Poll only one message at a time
+        MaxNumberOfMessages=1,
         WaitTimeSeconds=10
     )
     
