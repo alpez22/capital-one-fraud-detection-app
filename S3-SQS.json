@@ -1,0 +1,7 @@
+{
+    "bucket_name": "c1-fraud-detection-data",
+    "transactions_key": "transactions.csv",
+    "customers_key": "customers.csv",
+    "accounts_key": "accounts.csv",
+    "sqs_url": "https://sqs.us-east-1.amazonaws.com/624438129884/data_ingestion_pipeline_queue"
+  }
