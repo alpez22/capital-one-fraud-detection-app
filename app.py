@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 import pandas as pd
 import boto3
 import io
 
 # Initialize Flask app and S3 client
 app = Flask(__name__)
+app.secret_key = 'J31p3u8tO4UHfJMuJbXlyqScqhWprv/49wltSGyG'
 s3 = boto3.client('s3')
 
 # Set S3 bucket name and the CSV key
@@ -48,8 +49,9 @@ def home():
         }])
         updated_df = pd.concat([df, new_transaction], ignore_index=True)
         upload_transactions_to_s3(updated_df)
-
-        # Redirect to the home page after submission
+        
+	# Redirect to the home page after submission
+        flash('Transaction added successfully!', 'success')
         return redirect(url_for('home'))
 
     # Render the form to input transactions
