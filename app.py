@@ -7,9 +7,9 @@ import io
 app = Flask(__name__)
 s3 = boto3.client('s3')
 
-# Set your S3 bucket name and the CSV key
-BUCKET_NAME = 'your-bucket-name'
-CSV_KEY = 'test_transactions.csv'  # Ensure this matches your S3 path
+# Set S3 bucket name and the CSV key
+BUCKET_NAME = 'c1-fraud-detection-data'
+CSV_KEY = 'test-transaction.csv'
 
 def fetch_transactions_from_s3():
     """Fetch the transactions from the CSV file in S3, or create a new DataFrame if it doesn't exist."""
