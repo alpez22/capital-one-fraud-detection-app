@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sdv.tabular import CTGAN
+from ctgan import CTGAN
 
 # Step 1: Create a sample dataset to train the model
 np.random.seed(42)
@@ -24,25 +24,20 @@ train_data = pd.DataFrame({
     'fraud': np.random.choice([0, 1], size=1000, p=[0.95, 0.05])  # 5% fraud rate
 })
 
-# Step 2: Define the data types for the CTGAN model
-field_types = {
-    'transaction_id': 'id',
-    'amount': 'float',
-    'transaction_time': 'integer',
-    'location_id': 'categorical',
-    'merchant_id': 'categorical',
-    'device_id': 'categorical',
-    'customer_age': 'integer',
-    'customer_gender': 'categorical',
-    'transaction_category': 'categorical',
-    'num_prev_transactions': 'integer',
-    'credit_score': 'integer',
-    'fraud': 'categorical'
-}
+# Step 2: Define discrete columns for the CTGAN model
+# (CTGAN in the latest versions uses this approach)
+discrete_columns = [
+    'location_id',
+    'merchant_id',
+    'device_id',
+    'customer_gender',
+    'transaction_category',
+    'fraud'
+]
 
 # Step 3: Initialize and train the CTGAN model
-model = CTGAN(field_types=field_types, epochs=100)
-model.fit(train_data)
+model = CTGAN(epochs=100)
+model.fit(train_data, discrete_columns=discrete_columns)
 
 # Step 4: Generate synthetic transaction data
 synthetic_data = model.sample(10000)
