@@ -10,7 +10,7 @@ s3 = boto3.client('s3')
 
 # Set S3 bucket name and the CSV key
 BUCKET_NAME = 'c1-fraud-detection-data'
-CSV_KEY = 'transaction.csv'
+CSV_KEY = 'transactions.csv'
 
 def fetch_transactions_from_s3():
     """Fetch the transactions from the CSV file in S3, or create a new DataFrame if it doesn't exist."""
