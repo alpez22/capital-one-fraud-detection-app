@@ -18,7 +18,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            padding: 10px;
         }
 
         h1 {
@@ -30,42 +30,36 @@
 
         .form-container {
             background-color: #fff;
-            padding: 30px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
+            max-width: 100%;
+            width: 400px;
         }
 
         label {
             font-weight: 500;
             color: #333;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
         }
 
         input[type="text"],
         input[type="number"],
-        input[type="date"] {
+        select {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 20px;
+            padding: 8px;
+            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 14px;
         }
 
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        input[type="date"]:focus {
-            border-color: #007BFF;
-            outline: none;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-        }
-
         button {
             background-color: #007BFF;
             color: white;
-            padding: 12px;
+            padding: 10px;
             width: 100%;
             border: none;
             border-radius: 4px;
@@ -94,7 +88,8 @@
 
         @media (max-width: 768px) {
             .form-container {
-                padding: 20px;
+                padding: 15px;
+                width: 100%;
             }
 
             h1 {
@@ -116,45 +111,56 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="/">
-            <label for="amount">Amount:</label>
+        <form method="POST" action="/" onsubmit="return validateForm()">
+            <label for="amount">Amount (lognormal distribution):</label>
             <input type="number" step="0.01" id="amount" name="amount" required>
 
-            <label for="transactionTime">Transaction Time:</label>
-            <input type="text" id="transactionTime" name="transactionTime" required>
+            <label for="transactionTime">Transaction Time (0–86400 seconds):</label>
+            <input type="number" id="transactionTime" name="transactionTime" min="0" max="86400" required>
 
             <label for="location">Location:</label>
-            <input type="text" id="location" name="location" required>
+            <select id="location" name="location" required>
+                <option value="1">123 Elm Street, Springfield, IL</option>
+                <option value="2">456 Oak Avenue, St. Louis, MO</option>
+                <option value="3">789 Pine Road, Miami, FL</option>
+                <option value="4">321 Maple Lane, Madison, WI</option>
+                <option value="5">654 Birch Drive, Denver, CO</option>
+                <option value="6">987 Cedar Court, Boston, MA</option>
+                <option value="7">246 Aspen Way, Phoenix, AZ</option>
+                <option value="8">135 Willow Street, Nashville, TN</option>
+                <option value="9">864 Sycamore Boulevard, San Diego, CA</option>
+                <option value="10">753 Redwood Circle, New York, NY</option>
+            </select>
 
-            <label for="locationId">Location ID:</label>
-            <input type="text" id="locationId" name="locationId" required>
+            <label for="locationId">Location ID (1–999):</label>
+            <input type="number" id="locationId" name="locationId" min="1" max="999" required>
 
-            <label for="merchantId">Merchant ID:</label>
-            <input type="text" id="merchantId" name="merchantId" required>
+            <label for="merchantId">Merchant ID (1–500):</label>
+            <input type="number" id="merchantId" name="merchantId" min="1" max="500" required>
 
-            <label for="deviceId">Device ID:</label>
-            <input type="text" id="deviceId" name="deviceId" required>
+            <label for="deviceId">Device ID (1–9999):</label>
+            <input type="number" id="deviceId" name="deviceId" min="1" max="9999" required>
 
-            <label for="customerAge">Customer Age:</label>
-            <input type="number" id="customerAge" name="customerAge" required>
+            <label for="customerAge">Customer Age (18–90):</label>
+            <input type="number" id="customerAge" name="customerAge" min="18" max="90" required>
 
-            <label for="numPrevTransactions">Number of Previous Transactions:</label>
-            <input type="number" id="numPrevTransactions" name="numPrevTransactions" required>
+            <label for="numPrevTransactions">Previous Transactions (0–1000):</label>
+            <input type="number" id="numPrevTransactions" name="numPrevTransactions" min="0" max="1000" required>
 
-            <label for="creditScore">Credit Score:</label>
-            <input type="number" id="creditScore" name="creditScore" required>
+            <label for="creditScore">Credit Score (300–850):</label>
+            <input type="number" id="creditScore" name="creditScore" min="300" max="850" required>
 
-            <label for="year">Year:</label>
-            <input type="number" id="year" name="year" required>
+            <label for="year">Year (1900–2100):</label>
+            <input type="number" id="year" name="year" min="1900" max="2100" required>
 
-            <label for="month">Month:</label>
-            <input type="number" id="month" name="month" required>
+            <label for="month">Month (1–12):</label>
+            <input type="number" id="month" name="month" min="1" max="12" required>
 
-            <label for="day">Day:</label>
-            <input type="number" id="day" name="day" required>
+            <label for="day">Day (1–31):</label>
+            <input type="number" id="day" name="day" min="1" max="31" required>
 
-            <label for="transaction_id">Transaction Id:</label>
-            <input type="number" id="transaction_id" name="transaction_id" required>
+            <label for="transaction_id">Transaction ID (min: 10001):</label>
+            <input type="number" id="transaction_id" name="transaction_id" min="10001" required>
 
             <button type="submit">Add Transaction</button>
         </form>
@@ -170,6 +176,22 @@
                 }, 2000);
             }
         };
+
+        // JavaScript to validate form fields
+        function validateForm() {
+            const year = parseInt(document.getElementById('year').value, 10);
+            const month = parseInt(document.getElementById('month').value, 10);
+            const day = parseInt(document.getElementById('day').value, 10);
+
+            // Check if the date is valid
+            const date = new Date(year, month - 1, day); // JavaScript months are 0-indexed
+            if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) {
+                alert("Invalid date. Please ensure year, month, and day form a valid date.");
+                return false;
+            }
+
+            return true;
+        }
     </script>
 </body>
 </html>
