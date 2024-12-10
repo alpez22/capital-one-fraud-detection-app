@@ -4,78 +4,88 @@ import urllib.parse
 
 sns = boto3.client('sns')
 dynamodb = boto3.resource('dynamodb')
-DYNAMO_DB_TABLE = 'Transactions'
+DYNAMO_DB_TABLE = 'synthetic_transactions'  
 
 API_BASE_URL = 'https://mx2rbjpzug.execute-api.us-east-1.amazonaws.com/prod/confirmFraud'
 
+LOCATIONS_TABLE = {
+    "0": "123 Elm Street, Springfield, IL",
+    "1": "456 Oak Avenue, St. Louis, MO", 
+    "2": "789 Pine Road, Miami, FL",
+    "3": "321 Maple Lane, Madison, WI",    
+    "4": "654 Birch Drive, Denver, CO",
+    "5": "987 Cedar Court, Boston, MA",
+    "6": "246 Aspen Way, Phoenix, AZ",
+    "7": "135 Willow Street, Nashville, TN",
+    "8": "864 Sycamore Boulevard, San Diego, CA",
+    "9": "753 Redwood Circle, New York, NY"
+}
+
 def lambda_handler(event, context):
-    topic_arn = 'arn:aws:sns:us-east-1:624438129884:FraudAlertEmail'
+    topic_arn = 'arn:aws:sns:us-east-1:624438129884:tempemail'
     
-    # Scan the DynamoDB table for all items where fraud is detected
     table = dynamodb.Table(DYNAMO_DB_TABLE)
     
+    # Set to track already processed transaction IDs
+    processed_transactions = set()
+
     try:
         print("Scanning DynamoDB table for fraud detected accounts...")
 
-        # Scan the table to get all items (may be large data, use pagination if needed)
-        response = table.scan()
+        # Paginated scan
+        last_evaluated_key = None
+        while True:
+            # Scan the table, but limit to fraud detected transactions (is_fraud_detected = 1)
+            scan_params = {}
+            if last_evaluated_key:
+                scan_params['ExclusiveStartKey'] = last_evaluated_key
 
-        # List to keep track of fraud detected account names
-        fraud_account_details = []
+            response = table.scan(**scan_params)
 
-        # Loop through each item in the response
-        for item in response.get('Items', []):
-            account_id = item.get('accountId')
-            is_fraud_detected = item.get('is_fraud_detected', 0)  # Default to 0 if not found
-            
-            if is_fraud_detected == 1:
-                # Collect details for fraud detected accounts
-                amount = item.get('amount', 0)  
-                transaction_date = item.get('transactionDate', 'N/A')
-                transaction_location = item.get('transactionLocation', 'N/A')
+            for item in response.get('Items', []):
+                transaction_id = item.get('transaction_id')  # Updated field name
+                is_fraud_detected = int(item.get('is_fraud_detected', 0))
+                
+                if is_fraud_detected == 1 and transaction_id not in processed_transactions:
+                    # Extract relevant fields for fraud alert
+                    amount = float(item.get('amount', 0))  
+                    location = str(item.get('location', 'N/A'))
+                    day = item.get('day', 'N/A')
+                    month = item.get('month', 'N/A')
+                    year = item.get('year', 'N/A')
 
-                # URL encode the account ID and other params
-                confirm_url = f"{API_BASE_URL}?action=confirm&accountId={urllib.parse.quote(account_id)}"
-                deny_url = f"{API_BASE_URL}?action=deny&accountId={urllib.parse.quote(account_id)}"
+                    location_address = LOCATIONS_TABLE.get(location, "Unknown Location")
 
-                fraud_account_details.append(
-                    {
-                        "account_id": account_id,
-                        "amount": amount,
-                        "transaction_date": transaction_date,
-                        "transaction_location": transaction_location,
-                        "confirm_url": confirm_url,
-                        "deny_url": deny_url
-                    }
-                )
+                    transaction_date = f"{year}-{month}-{day}"
+
+                    confirm_url = f"{API_BASE_URL}?action=confirm&transaction_id={urllib.parse.quote(transaction_id)}"
+                    deny_url = f"{API_BASE_URL}?action=deny&transaction_id={urllib.parse.quote(transaction_id)}"
+
+                    fraud_message = (
+                        f"Fraud Alert - Account ID: {transaction_id}\n\n"
+                        f"Amount: ${round(amount, 2)}\n"  # Rounded amount to 2 decimal places
+                        f"Location: {location_address}\n"
+                        f"Transaction Date: {transaction_date}\n"
+                        f"Please confirm if this transaction is fraudulent:\n"
+                        f"Confirm: {confirm_url}\n"
+                        f"Deny: {deny_url}\n"
+                    )
+
+                    sns.publish(
+                        TopicArn=topic_arn,
+                        Message=fraud_message,
+                        Subject=f'Fraud Alert - Account {transaction_id}'
+                    )
+
+                    processed_transactions.add(transaction_id)
+
+            last_evaluated_key = response.get('LastEvaluatedKey', None)
+            if not last_evaluated_key:
+                break
         
-        if not fraud_account_details:
-            return {
-                'statusCode': 200,
-                'body': json.dumps({'message': 'No fraud detected for any accounts.'})
-            }
-        
-        # Build a message listing all the accounts with fraud detected
-        fraud_message = "The following accounts have fraud detected:\n\n"
-        for fraud in fraud_account_details:
-            fraud_message += (f"Account ID: {fraud['account_id']}\n"
-                              f"Amount: {fraud['amount']}\n"
-                              f"Transaction Date: {fraud['transaction_date']}\n"
-                              f"Transaction Location: {fraud['transaction_location']}\n"
-                              f"Please confirm if this transaction is fraudulent:\n"
-                              f"Confirm: {fraud['confirm_url']}\n"
-                              f"Deny: {fraud['deny_url']}\n\n")
-        
-        # Send an email notification with the fraud details
-        sns.publish(
-            TopicArn=topic_arn,
-            Message=fraud_message,
-            Subject='Fraud Alert - Accounts Detected'
-        )
-
         return {
             'statusCode': 200,
-            'body': json.dumps({'message': 'Fraud alert email sent with detected account details.'})
+            'body': json.dumps({'message': 'Fraud alert emails sent for all detected accounts.'})
         }
     
     except Exception as e:
